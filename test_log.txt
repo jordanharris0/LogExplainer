@@ -1,0 +1,5 @@
+Jun 06 14:32:45 server-01 sshd[1249]: Failed password for invalid user admin from 192.168.1.100 port 58632 ssh2
+2025/06/06 12:01:02 [error] 2345#0: *1023 open() "/var/www/html/favicon.ico" failed (2: No such file or directory)
+Uncaught Exception: TypeError: Cannot read properties of undefined (reading 'name') at /app/server.js:45:12
+Warning  BackOff  1m (x5 over 5m)  kubelet Back-off restarting failed container
+Traceback (most recent call last): File "main.py", line 22, in <module> result = process(data) File "main.py", line 10, in process return data['key'] TypeError: 'NoneType' object is not subscriptable
