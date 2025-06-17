@@ -3,6 +3,8 @@ from dotenv import load_dotenv  # allows access to .env file
 from openai import OpenAI  # allows access to OpenAI API
 
 import time  # allows access to time function
+import json  # allows access to JSON functions
+import csv  # allows access to CSV functions
 
 
 # load API key from .env file
@@ -55,11 +57,30 @@ else:
 export = input(
     'Would you like to export the explanations to a file? (y/n): ').strip().lower()
 
+output_path = None  # initialize output_path variable
+
 if export == 'y':
-    # get file name from user
-    output_path = input(
-        'Enter the output filename (e.g., explained_logs.md): ').strip()
-    explanations = []  # initialize empty list to store explanations
+
+    while not output_path:
+
+        # get file name from user
+        output_path = input(
+            'Enter the output filename ending in .txt, .md, .json, .csv (e.g., explained_logs.md): ').strip()
+
+        print(f'Preparing to save explanations to {output_path}...')
+        time.sleep(1)
+
+        # validation
+        if not output_path.endswith(('.txt', '.md', '.json', '.csv')):
+            print('Unsupported file format. Please use .txt, .md, or .json.')
+            output_path = None  # resets output_path to prompt again
+
+    if output_path.endswith('.json'):
+        json_data = []
+    elif output_path.endswith('.csv'):
+        csv_data = []
+    else:
+        explanations = []  # initialize empty list to store explanations
 else:
     output_path = None
 
@@ -90,13 +111,28 @@ for i, log in enumerate(log_lines):
     explanation = response.choices[0].message.content
 
     if output_path:
+        # if output_path is provided, append the explanation to json list
+        if output_path.endswith('.json'):
+            json_data.append({
+                "line": i + 1,
+                "log": log,
+                "explanation": explanation
+            })
+            print(f'Appending explanation for line {i + 1}...')
+            time.sleep(0.5)
 
-        # if output_path is provided, format and append to the explaination list
-        explanations.append(
-            f'## Explanation for Line {i + 1}:\n{log}\n\n{explanation}\n\n')
-        print(f'Appending explanation for line {i + 1}...')
-        time.sleep(0.5)
+        # elif append the explanation to csv list
+        elif output_path.endswith('.csv'):
+            csv_data.append([log, explanation])
+            print(f'Appending explanation for line {i + 1}...')
+            time.sleep(0.5)
 
+        # else append the explanation list
+        else:
+            explanations.append(
+                f'## Explanation for Line {i + 1}:\n{log}\n\n{explanation}\n\n')
+            print(f'Appending explanation for line {i + 1}...')
+            time.sleep(0.5)
     else:
 
         # prints the log message being explained
@@ -107,7 +143,25 @@ for i, log in enumerate(log_lines):
 
 # write the explanation to the file
 if output_path:
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(explanations))
 
-        print(f'\n✅ Explanations saved to {output_path}.')
+    # if json file, write the json_data to the file
+    if output_path.endswith('.json'):
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(json_data, f, indent=2)
+            print(f'\n✅ Explanations saved to {output_path}.')
+
+    # elif csv file, write the csv_data to the file
+    elif output_path.endswith('.csv'):
+        with open(output_path, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Log Line', 'Explanation'])
+            for line, explanation in csv_data:
+                writer.writerow([line.strip(), explanation.strip()])
+            print(f'\n✅ Explanations saved to {output_path}.')
+
+    # else if txt or md file, write the explanations to the file
+    else:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(explanations))
+
+            print(f'\n✅ Explanations saved to {output_path}.')
